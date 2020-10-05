@@ -17,7 +17,7 @@
 
 # The network address to bind the server socket to
 # Use "localhost" to restrict access from the local machine.
-SERVER_ADDRESS = "localhost"
+SERVER_ADDRESS = ""
 
 # The TCP port to listen to
 SERVER_PORT = 9099

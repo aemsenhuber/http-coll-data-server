@@ -2,12 +2,7 @@
 
 ## Requirements
 
-The following Python packages are needed to make the library work:
-* numpy
-* pytables
-* matplotlib
-* mpl_tune (available either as `mpl-tune` pip package or [on Github](https://github.com/aemsenhuber/mpl_tune))
-* collresolve (available on [on Github](https://github.com/aemsenhuber/collresolve))
+The required PIP packages are described in the `requirements.txt` file. They can be installed with, e.g., `pip install -r requirements.txt`.
 
 ## Configuration
 
