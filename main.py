@@ -22,8 +22,35 @@ import wsgiref.simple_server
 import hcds_config
 import hcds_exception
 import hcds_responder_base
-import hcds_responder_coll
-import hcds_responder_sph
+
+responder_cache = {}
+
+def get_responder( path ):
+	'''
+	Get a responder for the given path component.
+
+	- path: The path for which to obtain a hcds_responder_base.BaseResponder object
+	'''
+
+	if not path in responder_cache:
+		if not path in hcds_config.MODS:
+			raise hcds_exception.NotFound
+
+		name, config = hcds_config.MODS[ path ]
+
+		if name == "base":
+			# That's just for testing; it should not be used as a real case
+			responder_cache[ path ] = hcds_responder_base.BaseResponder( config )
+		elif name == "coll":
+			import hcds_responder_coll
+			responder_cache[ path ] = hcds_responder_coll.CollResponder( config )
+		elif name == "sph":
+			import hcds_responder_sph
+			responder_cache[ path ] = hcds_responder_sph.SPHResponder( config )
+		else:
+			raise hcds_exception.NotFound
+
+	return responder_cache[ path ]
 
 def hcds_app( environ, respond ):
 	'''
@@ -39,31 +66,21 @@ def hcds_app( environ, respond ):
 
 		path = path[ len( hcds_config.BASE_PATH ) : ]
 		next_div = path.find( "/" )
-		if next_div is None:
-			name = path
+		if next_div < 0:
+			base = path
 			sub = None
 		else:
-			name = path[ : next_div ]
+			base = path[ : next_div ]
 			sub = path[ next_div + 1 : ]
 
-		if not name in hcds_config.MODS:
-			raise hcds_exception.NotFound
-
-		name, config = hcds_config.MODS[ name ]
-
-		if name == "coll":
-			module = hcds_responder_coll.CollResponder( config )
-		elif name == "sph":
-			module = hcds_responder_sph.SPHResponder( config )
-		else:
-			raise hcds_exception.NotFound
-
+		module = get_responder( base )
 		module.set_request( environ, respond )
 		module.set_url( url, sub )
-
 		module()
+		out = module.get_output()
+		module.clean()
 
-		return module.get_output()
+		return out
 	except hcds_exception.HCDSException as ex:
 		error = hcds_responder_base.ErrorResponder( {}, ex )
 

@@ -70,7 +70,7 @@ class SPHResponder( hcds_responder_base.BaseResponder ):
 		items = self.get_item_defs()
 
 		# The base URL lists all available items
-		if sub == "" or sub == "/":
+		if sub is None or sub == "":
 			response = []
 			for key in items:
 				response.append( { "name": key, "desc": items[ key ][ "desc" ] } )
