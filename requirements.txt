@@ -1,5 +1,6 @@
 numpy
 tables
 matplotlib
+maexpa
 mpl-tune
 collresolve

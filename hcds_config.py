@@ -36,10 +36,9 @@ BASE_PATH = "/data/"
 #        - file: Path to HDF5 file containing the data
 #        - desc: Human-reable description of the dataset
 #        - fields: Array of fields to retrieve from the file and send to the caller. Each item here is dictionary with the following keys:
-#          - key: Dataset name in the HDF5
+#          - data: Expression to compute the values; it is a mathematical expression parsed by MaExPa with the fields in the dataset available as variables
 #          - value: Human-readable description of the field
 #          - unit: Human-readable description of the unit of the data
-#          - factor: Factor by which the data in the file is multiplied before being sent back to the caller, for unit conversion; optional, if not set will be equivalent to unity
 #          - short: Short name of the field; optional, if not set, the "value" key will be used instead
 MODS = {
 	"coll": ( "coll", {

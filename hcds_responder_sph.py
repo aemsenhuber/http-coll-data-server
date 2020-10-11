@@ -20,20 +20,14 @@ import json
 import numpy
 import tables
 
+import maexpa
+
 import hcds_exception
 import hcds_responder_base
 
 class SPHResponder( hcds_responder_base.BaseResponder ):
 	def __init__( self, config ):
 		hcds_responder_base.BaseResponder.__init__( self, config )
-
-	def split_text( self, line ):
-		size = len( line )
-		num = 1 + ( size - 10 ) // 15
-		items = [ line[ :10 ].strip() ]
-		for i in range( 1, num ):
-			items.append( line[ 15 * i - 5 : 15 * ( i + 1 ) - 5 ].strip() )
-		return items
 
 	def num( self, val ):
 		if math.isfinite( val ):
@@ -73,12 +67,9 @@ class SPHResponder( hcds_responder_base.BaseResponder ):
 			except:
 				continue
 
-			sets = []
-			for item in defs:
-				values = group.__getattr__( item[ "key" ] )[ : ]
-				if "factor" in item:
-					values = [ _ * item[ "factor" ] for _ in values ]
-				sets.append( values )
+			get_data = lambda name: numpy.asarray( getattr( group, name )[ ... ] )
+
+			sets = [ maexpa.Expression( item[ "data" ], var = get_data )() for item in defs ]
 
 			items = []
 			for i in range( len( sets[ 0 ] ) ):
