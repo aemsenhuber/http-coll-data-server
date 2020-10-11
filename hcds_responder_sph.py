@@ -20,6 +20,7 @@ import json
 import numpy
 import tables
 
+import yaml
 import maexpa
 
 import hcds_exception
@@ -29,6 +30,31 @@ class SPHResponder( hcds_responder_base.BaseResponder ):
 	def __init__( self, config ):
 		hcds_responder_base.BaseResponder.__init__( self, config )
 
+	def get_item_defs( self ):
+		confdir = self.get_config( "dir" )
+		conffile = self.get_config( "file" )
+
+		items = None
+		if not conffile is None:
+			if not confdir is None:
+				conffile = confdir + "/" + conffile
+
+			try:
+				items = yaml.load( open( conffile ), Loader = yaml.Loader )
+			except FileNotFoundError:
+				pass
+
+		# Fall back to the configuration set in hcds_config.py
+		if items is None:
+			items = self.get_config( "items", {} )
+
+		# If it was set, we add the directory path to all data files as well
+		if not confdir is None:
+			for key in items:
+				items[ key ][ "file" ] = confdir + "/" + items[ key ][ "file" ]
+
+		return items
+
 	def num( self, val ):
 		if math.isfinite( val ):
 			return val
@@ -36,9 +62,14 @@ class SPHResponder( hcds_responder_base.BaseResponder ):
 			return None
 
 	def __call__( self ):
-		sub = self.get_sub()
-		items = self.get_config( "items" )
+		"""
+		Main entry point.
+		"""
 
+		sub = self.get_sub()
+		items = self.get_item_defs()
+
+		# The base URL lists all available items
 		if sub == "" or sub == "/":
 			response = []
 			for key in items:
@@ -61,24 +92,26 @@ class SPHResponder( hcds_responder_base.BaseResponder ):
 
 		data = []
 		labels = []
-		for n in range( 1000 ):
-			try:
-				group = h5file.root.__getattr__( "file_{:03d}".format( n ) )
-			except:
-				continue
 
-			get_data = lambda name: numpy.asarray( getattr( group, name )[ ... ] )
+		try:
+			for n in range( 1000 ):
+				try:
+					group = h5file.root.__getattr__( "file_{:03d}".format( n ) )
+				except:
+					continue
 
-			sets = [ maexpa.Expression( item[ "data" ], var = get_data )() for item in defs ]
+				get_data = lambda name: numpy.asarray( getattr( group, name )[ ... ] )
 
-			items = []
-			for i in range( len( sets[ 0 ] ) ):
-				items.append( [ self.num( dset[ i ] ) for dset in sets ] )
+				sets = [ maexpa.Expression( item[ "data" ], var = get_data )() for item in defs ]
 
-			data.append( items )
-			labels.append( group._v_attrs[ "desc" ] )
+				items = []
+				for i in range( len( sets[ 0 ] ) ):
+					items.append( [ self.num( dset[ i ] ) for dset in sets ] )
 
-		h5file.close()
+				data.append( items )
+				labels.append( group._v_attrs[ "desc" ] )
+		finally:
+			h5file.close()
 
 		response = {
 			"value": [ item[ "value" ] for item in defs ],

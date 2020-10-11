@@ -30,9 +30,11 @@ BASE_PATH = "/data/"
 # Available modules are:
 # - coll: The following item is available:
 #         - usetex: Boolean to indicate whether to use LaTeX for text formatting
-# - sph: One single key for configuration: items.
-#        This key one dictionary of available datasets.
-#        Each dataset is again a dictionary of three items:
+# - sph: The following item is available:
+#        - dir: Directory where both the configuration file and data files are present.
+#        - file: Name of a YAML containing the definitions
+#        - items: Direct definitions (only if "file" is not set or points to an non-existing file)
+#        Definitions are given as a dictionary, where the key are the identifiers and the value another dictionary of three items:
 #        - file: Path to HDF5 file containing the data
 #        - desc: Human-reable description of the dataset
 #        - fields: Array of fields to retrieve from the file and send to the caller. Each item here is dictionary with the following keys:
