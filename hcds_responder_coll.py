@@ -20,7 +20,7 @@ import json
 
 import numpy
 import matplotlib
-matplotlib.use( "svg" )
+matplotlib.use( "agg" )
 import matplotlib.pyplot
 
 import mpl_tune
@@ -256,6 +256,24 @@ class CollResponder( hcds_responder_base.BaseResponder ):
 
 		return values, response
 
+	def get_types( self ):
+		format = self.parse_list_query( "format", [ "jsoncheck", "jsondata", "jsonsvg", "svg", "pdf", "png", "jpg" ] )
+
+		if format == "jsondata":
+			return { "ctype": "application/json", "data": "json", "image": None }
+		if not format is None and format[ 0:4 ] == "json" and format != "jsoncheck":
+			return { "ctype": "application/json", "data": "json", "image": format[ 4: ] }
+		elif format == "svg":
+			return { "ctype": "image/svg+xml", "data": "image", "image": "svg" }
+		elif format == "pdf":
+			return { "ctype": "application/pdf", "data": "image", "image": "pdf" }
+		elif format == "png":
+			return { "ctype": "image/png", "data": "image", "image": "png" }
+		elif format == "jpg":
+			return { "ctype": "image/jpeg", "data": "image", "image": "jpg" }
+		else:
+			return { "ctype": "application/json", "data": "check", "image": None }
+
 	def __call__( self ):
 		'''
 		Main entry point of the module.
@@ -300,12 +318,23 @@ class CollResponder( hcds_responder_base.BaseResponder ):
 		'''
 
 		# First, we parse all the input parameters from the query string and validate the ones given as string against the list of allowed values
-		format = self.parse_list_query( "format", [ "raw", "svg" ] )
-		quant = self.parse_list_query( "quant", [ "regime", "acclr", "accsr", "acctr" ] )
+		formats = self.get_types()
 
 		values, response = self.retrieve_params( [ "model", "tar", "imp" ] )
 
+		if formats[ "data" ] == "check":
+			response[ "check" ] = True
+
+			self.start( "200 OK", [ ( "Content-Type", formats[ "ctype" ] ) ] )
+			self.add_output( bytes( json.dumps( response ), "utf-8" ) )
+
+			return
+
 		esc = collresolve.escape_velocity( self.conf, values[ "tar" ], values[ "imp" ] )
+
+		quant = self.parse_list_query( "quant", [ "regime", "acclr", "accsr", "acctr" ] )
+		if quant is None:
+			quant = "regime"
 
 		xmin = 0.
 		xmax = 90.
@@ -354,9 +383,9 @@ class CollResponder( hcds_responder_base.BaseResponder ):
 				except:
 					z[ j, i ] = 0.
 
-		if format is None:
-			pass
-		elif format == "raw":
+		buffer = None
+
+		if formats[ "image" ] is None:
 			response[ "vels" ] = y.tolist()
 			response[ "angs" ] = x.tolist()
 			response[ "vals" ] = z.tolist()
@@ -466,11 +495,20 @@ class CollResponder( hcds_responder_base.BaseResponder ):
 
 			figtext.set_axes( ax )
 
-			buffer = io.StringIO()
-			fig.savefig( buffer, dpi = 250, format = format, facecolor = "none", edgecolor = "none" )
-			response[ "image" ] = buffer.getvalue()
+			if formats[ "data" ] == "image":
+				buffer = io.BytesIO()
+			else:
+				buffer = io.StringIO()
+
+			fig.savefig( buffer, dpi = 250, format = formats[ "image" ], facecolor = "none", edgecolor = "none" )
+
+			if formats[ "data" ] != "image":
+				response[ "image" ] = buffer.getvalue()
 
 			matplotlib.pyplot.close( fig )
 
-		self.start( "200 OK", [ ( "Content-Type", "application/json" ) ] )
-		self.add_output( bytes( json.dumps( response ), "utf-8" ) )
+		self.start( "200 OK", [ ( "Content-Type", formats[ "ctype" ] ) ] )
+		if formats[ "data" ] == "image":
+			self.add_output( buffer.getvalue() )
+		else:
+			self.add_output( bytes( json.dumps( response ), "utf-8" ) )
