@@ -42,6 +42,22 @@ BASE_PATH = "/data/"
 #          - value: Human-readable description of the field
 #          - unit: Human-readable description of the unit of the data
 #          - short: Short name of the field; optional, if not set, the "value" key will be used instead
+# - db: The following item is available:
+#        - dir: Directory where both the configuration file and data files are present.
+#        - file: Name of a YAML containing the definitions
+#        - items: Direct definitions (only if "file" is not set or points to an non-existing file)
+#        Definitions are given as a dictionary, where the key are the identifiers and the value another dictionary with the following items:
+#        - file: Path to HDF5 file containing the data
+#        - desc: Human-reable description of the dataset
+#        - base_fields: List of fields available for the entire set; each entry is a dictionary with the following keys:
+#          - name: Field name as it should appear on the resulting data
+#          - data: Expression to compute the values; it is a mathematical expression parsed by MaExPa with the fields in the dataset available as variables
+#          - desc: Human-reable description of the field
+#          - format: Formatting information for the caller
+#        - fields: Fields to return for each entry in the database
+#          - name: Field name as it should appear on the resulting data
+#          - data: Expression to compute the values; it is a mathematical expression parsed by MaExPa with the fields in the dataset available as variables
+#        - plot: Plotting information. Passed as-is to the output
 MODS = {
 	"coll": ( "coll", {
 		"usetex": False,

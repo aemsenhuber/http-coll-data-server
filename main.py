@@ -45,8 +45,11 @@ def get_responder( path ):
 			import hcds_responder_coll
 			responder_cache[ path ] = hcds_responder_coll.CollResponder( config )
 		elif name == "sph":
-			import hcds_responder_sph
-			responder_cache[ path ] = hcds_responder_sph.SPHResponder( config )
+			import hcds_responder_set
+			responder_cache[ path ] = hcds_responder_set.SetResponder( config )
+		elif name == "db":
+			import hcds_responder_db
+			responder_cache[ path ] = hcds_responder_db.DBResponder( config )
 		else:
 			raise hcds_exception.NotFound
 

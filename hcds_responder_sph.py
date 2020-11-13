@@ -79,47 +79,17 @@ class SPHResponder( hcds_responder_base.BaseResponder ):
 			self.add_output( bytes( json.dumps( response ), "utf-8" ) )
 			return
 
+		sep = sub.find( "/" )
+		if sep < 0:
+			item = sub
+			query = None
+		else:
+			item = sub[ : sep ]
+			query = sub[ sep + 1 : ]
+
 		for key in items:
-			if sub == key or sub == key + "/":
-				self.compute_item( items[ key ] )
+			if item == key:
+				self.compute_item( items[ key ], query )
 				return
 
 		raise hcds_exception.NotFound
-
-	def compute_item( self, config ):
-		defs = config[ "fields" ]
-		h5file = tables.open_file( config[ "file" ] )
-
-		data = []
-		labels = []
-
-		try:
-			for n in range( 1000 ):
-				try:
-					group = h5file.root.__getattr__( "file_{:03d}".format( n ) )
-				except:
-					continue
-
-				get_data = lambda name: numpy.asarray( getattr( group, name )[ ... ] )
-
-				sets = [ maexpa.Expression( item[ "data" ], var = get_data )() for item in defs ]
-
-				items = []
-				for i in range( len( sets[ 0 ] ) ):
-					items.append( [ self.num( dset[ i ] ) for dset in sets ] )
-
-				data.append( items )
-				labels.append( group._v_attrs[ "desc" ] )
-		finally:
-			h5file.close()
-
-		response = {
-			"value": [ item[ "value" ] for item in defs ],
-			"unit": [ item[ "unit" ] for item in defs ],
-			"short": [ ( item[ "short" ] if "short" in item else item[ "value" ] ) for item in defs ],
-			"series": data,
-			"label": labels,
-		}
-
-		self.start( "200 OK", [ ( "Content-Type", "application/json" ) ] )
-		self.add_output( bytes( json.dumps( response ), "utf-8" ) )
