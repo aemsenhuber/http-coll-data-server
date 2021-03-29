@@ -8,5 +8,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD [ "python", "main.py" ]
+CMD [ "uwsgi", "--ini", "uwsgi.ini" ]
 EXPOSE 9099/tcp

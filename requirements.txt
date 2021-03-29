@@ -1,6 +1,7 @@
 numpy
 tables
 matplotlib
+uwsgi
 PyYAML
 maexpa
 mpl-tune
