@@ -64,6 +64,6 @@ MODS = {
 	} ),
 }
 
-# List of hosts from which to allow cross-domain requests.
+# List of origins from which to allow cross-domain requests.
 # This is useful during development when this server is not at the same address as the one providing the user interface.
 CORS_ORIGINS = []

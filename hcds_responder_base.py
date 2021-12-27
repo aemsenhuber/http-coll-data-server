@@ -161,9 +161,9 @@ class BaseResponder( object ):
 		'''
 
 		additional = []
-		for domain in hcds_config.CORS_ORIGINS:
-			if domain == "*" or domain == self.get_env( "HTTP_HOST" ):
-				additional.append( ( "Access-Control-Allow-Origin", domain ) )
+		for origin in hcds_config.CORS_ORIGINS:
+			if origin == "*" or origin == self.get_env( "HTTP_ORIGIN" ):
+				additional.append( ( "Access-Control-Allow-Origin", origin ) )
 				break
 
 		self.start_response( status, headers + additional )
